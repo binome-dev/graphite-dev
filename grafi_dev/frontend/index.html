@@ -885,7 +885,22 @@
         // only update the dropdown if we saw an agent_output_topic publish event
 
         if (sawOutput) {
-          reqSelect.innerHTML = `<option>${new_req}</option>`;
+            // Get existing requests
+            let requests = Array.from(reqSelect.options).map(opt => opt.value);
+            
+            // Add the new request if not already present
+            if (!requests.includes(new_req)) {
+            requests.push(new_req);
+            }
+            
+            // Add "All" at the top if it's not the only option
+            if (requests.length > 1 && !requests.includes("All")) {
+            requests.unshift("All");
+            }
+            
+            // Rebuild the select options
+            reqSelect.innerHTML = requests.map(r => `<option>${r}</option>`).join("");
+            reqSelect.value = new_req;
           reqSelect.value = new_req;
         }
 
