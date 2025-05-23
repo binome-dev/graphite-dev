@@ -100,7 +100,7 @@ jobs:
 
       - name: Install project
         run: |
-           uv --sync
+           uv sync
            uv build
 
       - name: mint API token
