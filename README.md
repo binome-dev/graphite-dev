@@ -14,7 +14,7 @@ pip install grafi-dev
 grafi-dev <path to your assistant instance>
 ```
 
-Or run from project:
+Or run from source:
 
 ```bash
 python -m grafi_dev.cli <path to your assistant instance>
@@ -28,7 +28,7 @@ python -m grafi_dev.cli <path to your assistant instance>
 
 ## Development
 
-To start the server from project
+To start the server from source
 
 ```bash
 python -m grafi_dev.cli <path to your assistant instance>
