@@ -19,17 +19,21 @@ def _load_assistant(path: Path):
     # Save original sys.path
     original_sys_path = sys.path.copy()
 
+    print(f"Original sys path is: {original_sys_path}")
+    print(f"Loading assistant from: {abs_path}")
+
     try:
-        # Add both the directory containing the script AND the project root to sys.path
+        # current working directory is project root
+        project_root = str(Path.cwd())
+
         script_dir = str(abs_path.parent)
-        project_root = str(Path(__file__).parent.parent)  # grafi-dev root directory
 
         if script_dir not in sys.path:
             sys.path.insert(0, script_dir)
         if project_root not in sys.path:
             sys.path.insert(0, project_root)
 
-        logger.debug(f"Modified sys.path: {sys.path}")
+        print(f"Modified sys.path: {sys.path}")
 
         # Now load the module
         spec = importlib.util.spec_from_file_location("user_code", abs_path)
