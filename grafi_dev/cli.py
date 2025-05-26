@@ -19,9 +19,6 @@ def _load_assistant(path: Path):
     # Save original sys.path
     original_sys_path = sys.path.copy()
 
-    print(f"Original sys path is: {original_sys_path}")
-    print(f"Loading assistant from: {abs_path}")
-
     try:
         # current working directory is project root
         project_root = str(Path.cwd())
@@ -32,8 +29,6 @@ def _load_assistant(path: Path):
             sys.path.insert(0, script_dir)
         if project_root not in sys.path:
             sys.path.insert(0, project_root)
-
-        print(f"Modified sys.path: {sys.path}")
 
         # Now load the module
         spec = importlib.util.spec_from_file_location("user_code", abs_path)

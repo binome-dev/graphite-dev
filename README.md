@@ -1,6 +1,6 @@
 # Graphite Dev
 
-Graphite Dev runs a local assistant with a visual workflow trace.
+Graphite Dev provides a local assistant runtime with visual workflow tracing. The tool must be executed from the project root directory to function properly.
 
 ## Installation
 
