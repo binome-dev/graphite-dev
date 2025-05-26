@@ -12,10 +12,11 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.12",
     "grafi>=0.0.11",
-    "tavily-python>=0.7.1",
     "typer>=0.15.3",
     "uvicorn>=0.34.2",
 ]
+
+
 
 
 [project.scripts]
@@ -23,3 +24,8 @@ grafi-dev = "grafi_dev.cli:app"
 
 [tool.setuptools.package-data]
 grafi_dev = ["frontend/*"]
+
+[dependency-groups]
+dev = [
+    "tavily-python>=0.7.2",
+]
