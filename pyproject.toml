@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "graphite-dev"
+name = "grafi-dev"
 version = "0.0.1"
 description = "Run a grafi Assistant locally with a live workflow graph & trace viewer"
 authors = [{ name = "Craig Li", email = "craig@binome.dev" }]
