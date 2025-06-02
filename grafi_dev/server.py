@@ -52,17 +52,27 @@ def _execution_context(conv_id: str, req_id: str):
 
 # ---------- conversation helpers ----------------------------------------
 def get_conversation_ids():
+    evs = container.event_store.get_events()
+    conv_ids = {e.execution_context.conversation_id for e in evs}
     return sorted(
-        {
-            e.execution_context.conversation_id
-            for e in container.event_store.get_events()
-        }
+        conv_ids,
+        key=lambda conv_id: min(
+            e.timestamp for e in evs if e.execution_context.conversation_id == conv_id
+        ),
     )
 
 
 def get_request_ids(conv_id: str):
     evs = container.event_store.get_conversation_events(conv_id)
-    return sorted({e.execution_context.assistant_request_id for e in evs})
+    req_ids = {e.execution_context.assistant_request_id for e in evs}
+    return sorted(
+        req_ids,
+        key=lambda req_id: min(
+            e.timestamp
+            for e in evs
+            if e.execution_context.assistant_request_id == req_id
+        ),
+    )
 
 
 # ---------- FastAPI factory ---------------------------------------------
