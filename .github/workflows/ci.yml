@@ -147,10 +147,14 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
 
-
       - name: Create Release
         uses: ncipollo/release-action@v1.12.0
         with:
           allowUpdates: true
           draft: false
           makeLatest: true
+          name: ${{ needs.version.outputs.package-version }}
+          body: Changelog Contents
+          token: ${{ github.token }}
+          tag: ${{ needs.version.outputs.package-version }}
+          skipIfReleaseExists: true
