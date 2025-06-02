@@ -22,6 +22,9 @@ dependencies = [
 [project.scripts]
 grafi-dev = "grafi_dev.cli:app"
 
+[tool.setuptools]
+packages = ["grafi_dev"]
+
 [tool.setuptools.package-data]
 grafi_dev = ["frontend/*"]
 
