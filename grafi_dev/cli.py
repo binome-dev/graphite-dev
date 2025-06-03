@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 app = typer.Typer(add_completion=False)
 
 
-def _load_assistant(path: Path):
+def _load_assistant(path: Path, assistant_name: str):
     # Ensure we're working with an absolute path
     abs_path = path.absolute().resolve()
 
@@ -35,12 +35,12 @@ def _load_assistant(path: Path):
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # type: ignore
 
-        if not hasattr(mod, "assistant"):
+        if not hasattr(mod, assistant_name):
             raise typer.BadParameter(
-                f"{path} must define a global variable `assistant` "
+                f"{path} must define a global variable `{assistant_name}` "
                 f"that is an instance of grafi.assistants.Assistant"
             )
-        return mod.assistant
+        return getattr(mod, assistant_name)
     finally:
         # Restore the original sys.path
         sys.path = original_sys_path
@@ -51,11 +51,12 @@ def run(
     script: Path,
     host: str = "127.0.0.1",
     port: int = 8080,
+    assistant_name: str = "assistant",
     open_browser: bool = True,
 ):
     """Run the assistant in *script* and launch the web UI."""
     logger.info("Starting server with %s", script)
-    assistant = _load_assistant(script)
+    assistant = _load_assistant(script, assistant_name)
     logger.info("Assistant loaded: %s", getattr(assistant, "name", assistant))
 
     if open_browser:
