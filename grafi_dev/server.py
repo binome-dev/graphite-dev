@@ -76,7 +76,7 @@ def get_request_ids(conv_id: str):
 
 
 # ---------- FastAPI factory ---------------------------------------------
-def create_app(assistant: Assistant, is_async: bool = False) -> FastAPI:
+def create_app(assistant: Assistant, is_async: bool = True) -> FastAPI:
     api = FastAPI(title="Graphite-Dev API")
 
     @api.post("/chat", response_model=ChatReply)

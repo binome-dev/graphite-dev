@@ -52,6 +52,7 @@ def run(
     host: str = "127.0.0.1",
     port: int = 8080,
     assistant_name: str = "assistant",
+    is_async: bool = True,
     open_browser: bool = True,
 ):
     """Run the assistant in *script* and launch the web UI."""
@@ -71,7 +72,7 @@ def run(
 
     # Pass the assistant instance directly to create_app
     uvicorn.run(
-        lambda: create_app(assistant),
+        lambda: create_app(assistant=assistant, is_async=is_async),  # type: ignore
         factory=True,  # <─ tells Uvicorn to call it
         host=host,
         port=port,
