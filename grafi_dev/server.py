@@ -76,16 +76,22 @@ def get_request_ids(conv_id: str):
 
 
 # ---------- FastAPI factory ---------------------------------------------
-def create_app(assistant: Assistant) -> FastAPI:
+def create_app(assistant: Assistant, is_async: bool = True) -> FastAPI:
     api = FastAPI(title="Graphite-Dev API")
 
     @api.post("/chat", response_model=ChatReply)
     async def chat(req: ChatRequest):
         try:
-            out = assistant.execute(
-                _execution_context(req.conversation_id, req.assistant_request_id),
-                _to_messages(req.messages),
-            )
+            if is_async:
+                out = await assistant.a_execute(
+                    _execution_context(req.conversation_id, req.assistant_request_id),
+                    _to_messages(req.messages),
+                )
+            else:
+                out = assistant.execute(
+                    _execution_context(req.conversation_id, req.assistant_request_id),
+                    _to_messages(req.messages),
+                )
             logger.info(out)
             return ChatReply(messages=out)
         except Exception as exc:
