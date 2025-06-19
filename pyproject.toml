@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "grafi-dev"
-version = "0.0.3"
+version = "0.0.4"
 description = "Run a grafi Assistant locally with a live workflow graph & trace viewer"
 authors = [{ name = "Craig Li", email = "craig@binome.dev" }]
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "fastapi>=0.115.12",
-    "grafi>=0.0.12",
+    "grafi>=0.0.16",
     "typer>=0.15.3",
     "uvicorn>=0.34.2",
 ]
