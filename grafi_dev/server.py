@@ -82,11 +82,14 @@ def create_app(assistant: Assistant, is_async: bool = True) -> FastAPI:
     @api.post("/chat", response_model=ChatReply)
     async def chat(req: ChatRequest):
         try:
+            out: Messages = []
             if is_async:
-                out = await assistant.a_execute(
+
+                async for messages in assistant.a_execute(
                     _execution_context(req.conversation_id, req.assistant_request_id),
                     _to_messages(req.messages),
-                )
+                ):
+                    out.extend(messages)
             else:
                 out = assistant.execute(
                     _execution_context(req.conversation_id, req.assistant_request_id),
