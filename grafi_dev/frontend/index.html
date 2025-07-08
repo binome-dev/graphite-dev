@@ -21,6 +21,9 @@
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-yaml.min.js"></script>
+    
+    <!-- Marked for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 
     <style>
       body {
@@ -197,13 +200,15 @@
           (e.input_data || []).forEach((m) => {
             const b = document.createElement("div");
             b.className = "bubble user";
-            b.textContent = m.content || "";
+            const content = m.content || "";
+            b.innerHTML = marked.parse(content);
             container.appendChild(b);
           });
           (e.output_data || []).forEach((m) => {
             const b = document.createElement("div");
             b.className = "bubble assistant";
-            b.textContent = m.content || "";
+            const content = m.content || "";
+            b.innerHTML = marked.parse(content);
             container.appendChild(b);
           });
         });
@@ -316,9 +321,10 @@
       // build graph & interaction
       let cy, wf;
       (async () => {
-        wf = await (await fetch("/workflow")).json();
-        renderYAML(panes.Info, wf);
+        assistant_json = await (await fetch("/workflow")).json();
+        renderYAML(panes.Info, assistant_json);
 
+        wf = assistant_json.workflow;
         const elems = [];
         Object.keys(wf.topics).forEach((t) =>
           elems.push({ data: { id: t, label: t, type: "topic" } })
