@@ -40,37 +40,35 @@ def _to_messages(msgs_in: List[MsgIn]) -> Messages:
     return [Message(role=m.role, content=m.content) for m in msgs_in]
 
 
-def _execution_context(conv_id: str, req_id: str):
-    from grafi.common.models.execution_context import ExecutionContext
+def _invoke_context(conv_id: str, req_id: str):
+    from grafi.common.models.invoke_context import InvokeContext
 
-    return ExecutionContext(
+    return InvokeContext(
         conversation_id=conv_id,
         assistant_request_id=req_id,
-        execution_id=uuid.uuid4().hex,
+        invoke_id=uuid.uuid4().hex,
     )
 
 
 # ---------- conversation helpers ----------------------------------------
 def get_conversation_ids():
     evs = container.event_store.get_events()
-    conv_ids = {e.execution_context.conversation_id for e in evs}
+    conv_ids = {e.invoke_context.conversation_id for e in evs}
     return sorted(
         conv_ids,
         key=lambda conv_id: min(
-            e.timestamp for e in evs if e.execution_context.conversation_id == conv_id
+            e.timestamp for e in evs if e.invoke_context.conversation_id == conv_id
         ),
     )
 
 
 def get_request_ids(conv_id: str):
     evs = container.event_store.get_conversation_events(conv_id)
-    req_ids = {e.execution_context.assistant_request_id for e in evs}
+    req_ids = {e.invoke_context.assistant_request_id for e in evs}
     return sorted(
         req_ids,
         key=lambda req_id: min(
-            e.timestamp
-            for e in evs
-            if e.execution_context.assistant_request_id == req_id
+            e.timestamp for e in evs if e.invoke_context.assistant_request_id == req_id
         ),
     )
 
@@ -85,14 +83,14 @@ def create_app(assistant: Assistant, is_async: bool = True) -> FastAPI:
             out: Messages = []
             if is_async:
 
-                async for messages in assistant.a_execute(
-                    _execution_context(req.conversation_id, req.assistant_request_id),
+                async for messages in assistant.a_invoke(
+                    _invoke_context(req.conversation_id, req.assistant_request_id),
                     _to_messages(req.messages),
                 ):
                     out.extend(messages)
             else:
-                out = assistant.execute(
-                    _execution_context(req.conversation_id, req.assistant_request_id),
+                out = assistant.invoke(
+                    _invoke_context(req.conversation_id, req.assistant_request_id),
                     _to_messages(req.messages),
                 )
             logger.info(out)
