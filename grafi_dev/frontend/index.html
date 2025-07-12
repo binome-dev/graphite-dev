@@ -582,7 +582,7 @@
               if (reqSelect.value !== "All") {
                 evs = evs.filter(
                   (e) =>
-                    e.execution_context.assistant_request_id === reqSelect.value
+                    e.invoke_context.assistant_request_id === reqSelect.value
                 );
               }
               switch (eventView.value) {
@@ -827,7 +827,7 @@
         }
         if (reqSelect.value !== "All") {
           evs = evs.filter(
-            (e) => e.execution_context.assistant_request_id === reqSelect.value
+            (e) => e.invoke_context.assistant_request_id === reqSelect.value
           );
         }
 
