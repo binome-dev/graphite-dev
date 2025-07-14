@@ -362,17 +362,45 @@
             })
           );
           n.subscribed_expressions.forEach((expr) => {
-            [expr.topic, expr.left?.topic, expr.right?.topic]
-              .filter((x) => x)
-              .forEach((x) => {
-                elems.push({
-                  data: {
-                    id: `${x.name}->${n.name}`,
-                    source: x.name,
-                    target: n.name,
-                  },
-                });
+            // Recursively extract all topics from the expression tree
+            function extractTopics(expression) {
+              const topics = [];
+              
+              if (expression.topic) {
+                topics.push(expression.topic);
+              }
+              
+              if (expression.left) {
+                if (expression.left.topic) {
+                  topics.push(expression.left.topic);
+                } else {
+                  // Recursively extract from left expression
+                  topics.push(...extractTopics(expression.left));
+                }
+              }
+              
+              if (expression.right) {
+                if (expression.right.topic) {
+                  topics.push(expression.right.topic);
+                } else {
+                  // Recursively extract from right expression
+                  topics.push(...extractTopics(expression.right));
+                }
+              }
+              
+              return topics;
+            }
+            
+            const allTopics = extractTopics(expr);
+            allTopics.forEach((topic) => {
+              elems.push({
+                data: {
+                  id: `${topic.name}->${n.name}`,
+                  source: topic.name,
+                  target: n.name,
+                },
               });
+            });
           });
         });
 

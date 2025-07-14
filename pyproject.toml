@@ -30,6 +30,7 @@ grafi_dev = ["frontend/*"]
 
 [dependency-groups]
 dev = [
+    "google-genai>=1.25.0",
     "googlesearch-python>=1.3.0",
     "pycountry>=24.6.1",
     "tavily-python>=0.7.2",
