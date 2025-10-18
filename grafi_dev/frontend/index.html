@@ -319,7 +319,7 @@
       let selected = { type: null, id: null };
 
       // build graph & interaction
-      let cy, wf;
+      let cy, wf, assistant_json;
       (async () => {
         assistant_json = await (await fetch("/workflow")).json();
         renderYAML(panes.Info, assistant_json);
@@ -331,9 +331,8 @@
         );
         Object.values(wf.nodes).forEach((n) => {
           elems.push({ data: { id: n.name, label: n.name, type: "node" } });
-          if (n.command) {
-            const commandName = Object.keys(n.command)[0];
-            const toolName = n.command[commandName].name || commandName;
+          if (n.tool) {
+            const toolName = n.tool.name;
             const toolId = `${n.name}#tool#${toolName}`;
 
             elems.push({ data: { id: toolId, label: toolName, type: "tool" } });
@@ -352,12 +351,12 @@
               },
             });
           }
-          n.publish_to.forEach((t) =>
+          n.publish_to.forEach((topicName) =>
             elems.push({
               data: {
-                id: `${n.name}->${t.name}`,
+                id: `${n.name}->${topicName}`,
                 source: n.name,
-                target: t.name,
+                target: topicName,
               },
             })
           );
@@ -365,38 +364,31 @@
             // Recursively extract all topics from the expression tree
             function extractTopics(expression) {
               const topics = [];
-              
+
+              // If this expression has a topic field, it's the topic name (string)
               if (expression.topic) {
                 topics.push(expression.topic);
               }
-              
+
+              // Check left side of expression (for AND/OR operations)
               if (expression.left) {
-                if (expression.left.topic) {
-                  topics.push(expression.left.topic);
-                } else {
-                  // Recursively extract from left expression
-                  topics.push(...extractTopics(expression.left));
-                }
+                topics.push(...extractTopics(expression.left));
               }
-              
+
+              // Check right side of expression (for AND/OR operations)
               if (expression.right) {
-                if (expression.right.topic) {
-                  topics.push(expression.right.topic);
-                } else {
-                  // Recursively extract from right expression
-                  topics.push(...extractTopics(expression.right));
-                }
+                topics.push(...extractTopics(expression.right));
               }
-              
+
               return topics;
             }
-            
+
             const allTopics = extractTopics(expr);
-            allTopics.forEach((topic) => {
+            allTopics.forEach((topicName) => {
               elems.push({
                 data: {
-                  id: `${topic.name}->${n.name}`,
-                  source: topic.name,
+                  id: `${topicName}->${n.name}`,
+                  source: topicName,
                   target: n.name,
                 },
               });
@@ -625,7 +617,7 @@
         });
 
         // node/tool/topic click
-        cy.on("tap", "node", async (evt) => {
+        cy.on("tap", "node", (evt) => {
           // remove prior highlights
           cy.elements().removeClass("highlighted");
           // highlight this element
@@ -636,15 +628,53 @@
           if (currentTab === "Info") {
             if (typ === "tool") {
               const node_name = raw.split("#tool#")[0]; // Extract node name from node_name#tool#tool_name
-              renderYAML(panes.Info, wf.nodes[node_name].command);
+              renderYAML(panes.Info, wf.nodes[node_name].tool);
             } else if (typ === "node") {
               renderYAML(panes.Info, wf.nodes[raw]);
             } else {
               renderYAML(panes.Info, wf.topics[raw]);
             }
           } else if (currentTab === "Event") {
-            showTab("Event");
-            await document.querySelector('[data-tab="Event"]').onclick();
+            // Manually trigger the event filtering and rendering
+            let evs = eventsCache[convSelect.value] || [];
+
+            // apply element filters
+            if (selected.type === "node") {
+              evs = evs.filter(
+                (e) =>
+                  ["NodeInvoke", "NodeRespond"].includes(e.event_type) &&
+                  e.name === selected.id
+              );
+            }
+            if (selected.type === "tool") {
+              const toolName = selected.id.split("#tool#")[1];
+              evs = evs.filter(
+                (e) =>
+                  ["ToolInvoke", "ToolRespond"].includes(e.event_type) &&
+                  e.name === toolName
+              );
+            }
+            if (selected.type === "topic") {
+              evs = evs.filter(
+                (e) =>
+                  ["PublishToTopic", "ConsumeFromTopic"].includes(e.event_type) &&
+                  e.name === selected.id
+              );
+            }
+            if (reqSelect.value !== "All") {
+              evs = evs.filter(
+                (e) => e.invoke_context.assistant_request_id === reqSelect.value
+              );
+            }
+
+            // render according to drop‑down choice
+            switch (eventView.value) {
+              case "formed":
+                renderFormedEvents(evs);
+                break;
+              default:
+                renderRawEvents(evs);
+            }
           }
         });
       })();
@@ -691,13 +721,21 @@
           return "";
         };
 
-        const collect = (arr) =>
-          (arr || []).map(msgText).filter(Boolean).join(" | ");
-        const collectNested = (items) =>
-          (items || [])
-            .flatMap((it) => collect(it.data ?? []).split(" | "))
+        const collect = (arr) => {
+          if (!Array.isArray(arr)) return "";
+          return arr.map(msgText).filter(Boolean).join(" | ");
+        };
+        const collectNested = (items) => {
+          if (!Array.isArray(items)) return "";
+          return items
+            .flatMap((it) => {
+              const data = it.data ?? it;
+              if (!Array.isArray(data)) return [];
+              return collect(data).split(" | ");
+            })
             .filter(Boolean)
             .join(" | ");
+        };
 
         const level = (e) => {
           if (e.event_type.startsWith("Assistant")) return 0;
@@ -712,6 +750,7 @@
           0: "bg-sky-50",
           1: "bg-indigo-50",
           2: "bg-emerald-50",
+          2.5: "bg-teal-50",
           3: "bg-amber-50",
         };
 
@@ -884,11 +923,15 @@
           .filter((e) => e.event_type === "AssistantRespond")
           .map((e) => {
             const inp = e.input_data
-              ? e.input_data.map((msg) => ({ content: msg.content }))
+              ? e.input_data.data.map((msg) => ({ content: msg.content }))
               : [];
-            const out = e.output_data
-              ? e.output_data.map((msg) => ({ content: msg.content }))
-              : [];
+              const out = Array.isArray(e.output_data)
+                ? e.output_data.flatMap(ev =>
+                    Array.isArray(ev.data)
+                      ? ev.data.map(msg => ({ content: msg.content }))
+                      : []
+                  )
+                : [];
             return { input_data: inp, output_data: out };
           });
         renderHistory(panes.History, hist);
